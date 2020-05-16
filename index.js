@@ -78,11 +78,11 @@ function npmArgs (target, opts) {
 
 function getTargetPackageSpecFromNpmInstallOutput (npmInstallOutput) {
     const packageInfoLine = npmInstallOutput.split('\n')
-        .find(line => line.startsWith('+ '));
+        .find(line => line.startsWith('+ ') || line.startsWith('└─ ') || line.startsWith('`- '));
     if (!packageInfoLine) {
         throw new CordovaError(`Could not determine package name from output:\n${npmInstallOutput}`);
     }
-    return packageInfoLine.slice(2);
+    return packageInfoLine.slice(3);
 }
 
 // Resolves to installation path of package defined by spec if the right version
@@ -131,7 +131,7 @@ function isYarnInstalled () {
     });
 }
 
-module.exports.isNpmInstalled = isNpmInstalled;
+module.exports.isNpmInstalled = isYarnInstalled;
 
 /**
  * Uninstalls the package `target` from `dest` using given options.
@@ -143,11 +143,11 @@ module.exports.isNpmInstalled = isNpmInstalled;
  * @return {Promise<string>}    Resolves when removal has finished
  */
 module.exports.uninstall = (target, dest, opts) => {
-    const fetchArgs = ['uninstall'];
+    const fetchArgs = ['remove'];
     opts = opts || {};
 
     // check if npm is installed on the system
-    return isNpmInstalled()
+    return isYarnInstalled()
         .then(() => {
             if (dest && target) {
                 // add target to fetchArgs Array
@@ -157,16 +157,9 @@ module.exports.uninstall = (target, dest, opts) => {
             // set the directory where npm uninstall will be run
             opts.cwd = dest;
 
-            // if user added --save flag, pass --save-dev flag to npm uninstall command
-            if (opts.save) {
-                fetchArgs.push('--save-dev');
-            } else {
-                fetchArgs.push('--no-save');
-            }
-
             // run npm uninstall, this will remove dependency
             // from package.json if --save was used.
-            return superspawn.spawn('npm', fetchArgs, opts);
+            return superspawn.spawn('yarn', fetchArgs, opts);
         })
         .catch(err => {
             throw new CordovaError(err);
