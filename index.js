@@ -54,7 +54,7 @@ module.exports = function (target, dest, opts = {}) {
 
 // Installs the package specified by target and returns the installation path
 function installPackage (target, dest, opts) {
-    return isNpmInstalled()
+    return isYarnInstalled()
         // Ensure that `npm` installs to `dest` and not any of its ancestors
         .then(_ => fs.ensureDir(path.join(dest, 'node_modules')))
 
@@ -62,7 +62,7 @@ function installPackage (target, dest, opts) {
         .then(_ => npmArgs(target, opts))
         .then(args => {
             events.emit('verbose', `fetch: Installing ${target} to ${dest}`);
-            return superspawn.spawn('npm', args, { cwd: dest });
+            return superspawn.spawn('yarn', args, { cwd: dest });
         })
 
         // Resolve path to installed package
@@ -71,16 +71,8 @@ function installPackage (target, dest, opts) {
 }
 
 function npmArgs (target, opts) {
-    const args = ['install', target];
+    const args = ['add', target];
     opts = opts || {};
-
-    if (opts.save_exact) {
-        args.push('--save-exact');
-    } else if (opts.save) {
-        args.push('--save-dev');
-    } else {
-        args.push('--no-save');
-    }
     return args;
 }
 
@@ -133,9 +125,9 @@ function resolvePathToPackage (name, basedir) {
  *
  * @return {Promise<string>} Absolute path to npm.
  */
-function isNpmInstalled () {
-    return which('npm').catch(_ => {
-        throw new CordovaError('"npm" command line tool is not installed: make sure it is accessible on your PATH.');
+function isYarnInstalled () {
+    return which('yarn').catch(_ => {
+        throw new CordovaError('"yarn" command line tool is not installed: make sure it is accessible on your PATH.');
     });
 }
 
